@@ -1,0 +1,75 @@
+body, html {
+  overflow: hidden;;
+  height:100%;
+}
+
+#app {
+  height: 100%;
+}
+
+#layout {
+  height: 100%;
+  display: flex;
+}
+
+#stock-list {
+  background-color: #333333;
+  overflow-y: scroll;
+  height:100%;
+  min-width: 32rem;
+}
+
+#main {
+  margin: 0px 15px 5px 15px;
+  flex-grow: 1
+}
+
+.stock-item {
+  cursor: pointer;
+  padding: 10px 10px 5px 10px;
+  border-bottom: 1px #7D7C7C solid;
+}
+
+.stock-item:hover {
+  background: #434343;
+}
+
+.stock-item-name {
+  text-transform: uppercase;
+  color: #7D7C7C;
+}
+.stock-item-symbol {
+  width: 48px;
+  font-weight: bold;
+  color: #D8D8D8;
+}
+.stock-item-sector {
+  font-size: 80%;
+  color: #5D5C5C;
+}
+.stock-item-price {
+  color: #7D7C7C;
+  font-weight: bold;
+  font-size: 1.3rem;
+  float: right!important;
+}
+
+.stock-item-selected {
+  background: #eee;
+}
+
+.stock-header {
+  border-bottom: 1px #7D7C7C solid;
+}
+
+.stock-title {
+
+}
+
+.stock-subtitle {
+
+}
+
+.stock-price {
+  float: right!important;
+}
