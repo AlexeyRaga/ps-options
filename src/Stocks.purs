@@ -1,9 +1,13 @@
 module Stocks where
 
+import Utils
+import Control.Monad.Aff (Aff, attempt)
 import Data.Argonaut (class DecodeJson, decodeJson, (.?))
-import Prelude (($), bind, pure, id)
-import Data.Maybe (Maybe(..), maybe)
-import Global (readFloat, isNaN)
+import Data.Either (Either(Left), either)
+import Network.HTTP.Affjax (AJAX, get)
+import Prelude (($), (<<<), show, bind, pure)
+
+type Stocks = Array Stock
 
 newtype Stock = Stock
   { symbol :: String
@@ -11,7 +15,8 @@ newtype Stock = Stock
   , sector :: String
   , price  :: Number
   , low52  :: Number
-  , high52 :: Number }
+  , high52 :: Number
+  }
 
 instance decodeJsonStock :: DecodeJson Stock where
   decodeJson json = do
@@ -30,9 +35,8 @@ instance decodeJsonStock :: DecodeJson Stock where
                  , high52 : stringToNumberOrZero high52
                  }
 
-stringToNumber :: String -> Maybe Number
-stringToNumber s = if isNaN n then Nothing else Just n where n = readFloat s
-{-# INLINE stringToNumber #-}
-
-stringToNumberOrZero :: String -> Number
-stringToNumberOrZero s = maybe 0.0 id (stringToNumber s)
+loadStocks :: forall eff. Aff (ajax :: AJAX | eff) (Either String Stocks)
+loadStocks = do
+  res <- attempt $ get "http://data.okfn.org/data/core/s-and-p-500-companies/r/constituents-financials.json"
+  let decode r = decodeJson r.response :: Either String Stocks
+  pure $ either (Left <<< show) decode res
