@@ -1,46 +1,19 @@
 module StockList where
 
 import Stocks
-import Options
 import Control.Monad.Aff.Console (CONSOLE)
-import Data.Either (Either(Left, Right))
 import Network.HTTP.Affjax (AJAX)
-import Prelude (($), show, const, map, bind, pure, (<>))
+import Prelude (($), show, const, map, (<>))
 import Pux (EffModel, noEffects)
 import Pux.Html (Html, ul, li, p, div, span, text)
 import Pux.Html.Attributes (id_, className)
 import Pux.Html.Events (onClick)
 
-data Action
-  = Init
-  | ReceiveStocks (Either String Stocks)
-  | StockSelected Stock
+data Action = StockSelected Stock
 
-type State =
-  { stocks :: Stocks
-  , status :: String
-  }
+update :: forall eff. Action -> Stocks -> EffModel Stocks Action (console :: CONSOLE, ajax :: AJAX | eff)
 
-init :: State
-init = { stocks: [], status: "Waiting for data to be loaded" }
-
-update :: forall eff. Action -> State -> EffModel State Action (console :: CONSOLE, ajax :: AJAX | eff)
-update (ReceiveStocks (Left err)) state =
-  noEffects $ state { status = "Error fetching stocks: " <> show err }
-
-update (ReceiveStocks (Right stocks)) state =
-  noEffects $ state { stocks = stocks, status = "Ready." }
-
-update (StockSelected stock) state =
-  noEffects state
-
-update Init state =
-  { state: state { status = "Fetching stocks list..." }
-  , effects: [ do
-      stocks <- loadStocks
-      pure $ ReceiveStocks stocks
-    ]
-  }
+update (StockSelected stock) state = noEffects state
 
 listItem :: Stock -> Html Action
 listItem (Stock state) =
@@ -56,6 +29,6 @@ listItem (Stock state) =
                ]
       ]
 
-view :: State -> Html Action
+view :: Stocks -> Html Action
 view state =
-  ul [id_ "list", className "nav nav-sidebar"] $ map listItem state.stocks
+  ul [id_ "list", className "nav nav-sidebar"] $ map listItem state
