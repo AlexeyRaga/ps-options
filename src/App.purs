@@ -1,20 +1,16 @@
 module App where
 
-import Data.Array as A
 import Data.Maybe
 import OptionsTable as O
 import StockList as StockList
-import Control.Bind ((=<<))
-import Control.Monad.Aff.Console (CONSOLE, log)
-import Control.Monad.Eff.Class (liftEff)
+import Control.Monad.Aff.Console (CONSOLE)
 import Control.Monad.Eff.Now (NOW)
 import DOM (DOM)
-import DOM.HTML.HTMLSelectElement (selectedOptions)
 import Data.Date (Date)
 import Data.Either (Either, either)
 import Network.HTTP.Affjax (AJAX)
-import Prelude (($), (#), (<$>), (==), const, bind, pure, show, map, id, (<>))
-import Pux (EffModel, mapEffects, mapState, noEffects)
+import Prelude (const, id, map, show, ($), (<$>), (<>))
+import Pux (EffModel, noEffects)
 import Pux.Html (Html, div, h1, span, p, text, img)
 import Pux.Html.Attributes (id_, className, src)
 import Stocks (Options, Stock(..), isSameSymbol, loadOptions, loadStocks, setOptions)

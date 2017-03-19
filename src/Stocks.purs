@@ -2,16 +2,16 @@ module Stocks where
 
 import Utils
 import Control.Monad.Aff (Aff, attempt)
-import Data.Argonaut (class DecodeJson, decodeJson, (.?))
+import Data.Argonaut (class DecodeJson, decodeJson, jsonParser, (.?))
 import Data.Date (Date, year, month, day)
-import Data.Either (Either(Left), either)
+import Data.Either (Either(..), either)
 import Data.Enum (fromEnum)
 import Data.Maybe (Maybe(..))
-import Data.String.Regex (Regex, replace)
+import Data.String.Regex (replace)
 import Data.String.Regex.Flags (global)
 import Data.String.Regex.Unsafe (unsafeRegex)
 import Network.HTTP.Affjax (AJAX, URL, get)
-import Prelude (($), (<<<), (==), (<>), show, bind, pure)
+import Prelude (bind, pure, show, ($), (<<<), (<>), (==), (>>=))
 
 type Stocks = Array Stock
 
@@ -86,9 +86,8 @@ loadStocks = do
 loadOptions :: forall eff. Date -> Stock -> Aff (ajax :: AJAX | eff) (Either String Options)
 loadOptions d s = do
   res <- attempt $ get (optionsUrl d s)
---  let fixed r = replace keyRx "\"$1\":" r.response
-  let decode r = decodeJson r.response :: Either String Options
-  let stocks = either (Left <<< show) decode res
+  let fixed = mapEither show (\r -> fixupKeys r.response) res
+  let stocks = fixed >>= jsonParser >>= decodeJson
   pure stocks
 
 optionsUrl :: Date -> Stock -> URL

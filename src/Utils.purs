@@ -2,17 +2,25 @@ module Utils
 ( stringToNumber
 , stringToNumberOrZero
 , nextExpiry
+, mapLeft, mapEither
 ) where
 
-import Data.Maybe (Maybe(..), maybe)
 import Data.Bounded (bottom)
-import Data.Enum (fromEnum, succ)
 import Data.Date (Date, Month(..), Weekday(..), year, month, weekday, canonicalDate)
 import Data.DateTime (DateTime(..), date, adjust)
-import Data.Time.Duration (class Duration, Days(..))
+import Data.Either (Either(..), either)
+import Data.Enum (fromEnum, succ)
 import Data.Int (toNumber)
+import Data.Maybe (Maybe(..), maybe)
+import Data.Time.Duration (class Duration, Days(..))
 import Global (readFloat, isNaN)
-import Prelude (id, (-), (>), (+), ($), (==))
+import Prelude (id, ($), (+), (-), (<<<), (==), (>))
+
+mapEither :: forall a a' b b'. (a -> a') -> (b -> b') -> Either a b -> Either a' b'
+mapEither f g e = either (Left <<< f) (Right <<< g) e
+
+mapLeft :: forall a a' b. (a -> a') -> Either a b -> Either a' b
+mapLeft f e = either (Left <<< f) Right e
 
 stringToNumber :: String -> Maybe Number
 stringToNumber s = if isNaN n then Nothing else Just n where n = readFloat s
