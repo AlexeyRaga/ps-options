@@ -12,12 +12,11 @@ import Pux.Html.Events (onClick)
 data Action = StockSelected Stock
 
 update :: forall eff. Action -> Stocks -> EffModel Stocks Action (console :: CONSOLE, ajax :: AJAX | eff)
-
-update (StockSelected stock) state = noEffects state
+update _ = noEffects
 
 listItem :: Stock -> Html Action
 listItem (Stock state) =
-  li  [ className "stock-item", onClick (const $ StockSelected (Stock state)) ]
+  li  [ className "stock-item", onClick (const (StockSelected $ Stock state)) ]
         [ span [ className "stock-item-symbol"] [text state.symbol ]
         , div  []
                [ span [ className "stock-item-name" ] [ text state.name ]

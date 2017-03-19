@@ -1,55 +1,48 @@
 module App where
 
-import Data.Either (Either, either)
+import Data.Array as A
 import Data.Maybe
 import OptionsTable as O
 import StockList as StockList
 import Control.Bind ((=<<))
-import Control.Monad.Aff.Console (CONSOLE)
+import Control.Monad.Aff.Console (CONSOLE, log)
+import Control.Monad.Eff.Class (liftEff)
 import Control.Monad.Eff.Now (NOW)
-import Control.Monad.RWS (state)
 import DOM (DOM)
 import DOM.HTML.HTMLSelectElement (selectedOptions)
 import Data.Date (Date)
-import Data.Either (either)
+import Data.Either (Either, either)
 import Network.HTTP.Affjax (AJAX)
-import Options (Option(..), Options(..), loadOptions)
-import Prelude (($), (#), (<$>), const, bind, pure, show, map, id, (<>))
+import Prelude (($), (#), (<$>), (==), const, bind, pure, show, map, id, (<>))
 import Pux (EffModel, mapEffects, mapState, noEffects)
 import Pux.Html (Html, div, h1, span, p, text, img)
 import Pux.Html.Attributes (id_, className, src)
-import Stocks (Stock(..), Stocks, loadStocks)
-
-newtype StockInfo = StockInfo
-  { stock :: Stock
-  , calls :: Array Option
-  , puts  :: Array Option
-  }
+import Stocks (Options, Stock(..), isSameSymbol, loadOptions, loadStocks, setOptions)
 
 data Action
   = Init
-  | StocksLoaded (Either String (Array StockInfo))
-  | StockSelected Stock (Maybe Options)
+  | StocksLoaded (Either String (Array Stock))
+  | StockSelected Stock (Either String Options)
   | StockListAction StockList.Action
 
 type State =
   { date :: Date
-  , stocks :: Array StockInfo
+  , stocks :: Array Stock
   , selectedStock :: Maybe Stock
-  , selectedOptions :: Maybe Options
   }
 
-stocksList :: State -> Stocks
-stocksList ss = (\(StockInfo s) -> s.stock) <$> ss.stocks
+updateStock :: State -> Stock -> State
+updateStock state stock = state { stocks = stocks }
+  where
+    choose new old = if isSameSymbol new old then new else old
+    stocks = choose stock <$> state.stocks
 
 init :: Date -> State
 init d =
   { date: d
   , stocks: []
   , selectedStock: Nothing
-  , selectedOptions: Nothing
   }
-
 
 stockHeader :: Stock -> Html Action
 stockHeader (Stock stock) =
@@ -67,17 +60,19 @@ stockHeader (Stock stock) =
 stockInfo :: Stock -> Html Action
 stockInfo (Stock stock) =
   div [ className "stock-body" ]
-      [ img [ src ("https://chart.finance.yahoo.com/z?&t=6m&q=l&l=on&z=l&a=v&p=m50,m200&s=" <> stock.symbol) ] []
+      [ img [ className "stock-chart"
+            , src ("https://chart.finance.yahoo.com/z?&t=6m&q=l&l=on&z=l&a=v&p=m50,m200&s=" <> stock.symbol)
+            ] []
       ]
 
 view :: State -> Html Action
 view state =
   div [ id_ "layout" ]
-      [ div [ id_ "stock-list"] [ map StockListAction $ StockList.view (stocksList state) ]
+      [ div [ id_ "stock-list"] [ map StockListAction $ StockList.view state.stocks ]
       , div [ id_ "main" ]
             [ maybe (div [] []) stockHeader state.selectedStock
             , maybe (div [] []) stockInfo state.selectedStock
-            , maybe (div [] []) (O.view state.date) state.selectedOptions
+            , maybe (div [] []) (O.view state.date) state.selectedStock
             ]
       ]
 
@@ -86,23 +81,18 @@ update (StocksLoaded stocks) state =
   noEffects $ state { stocks = either (const []) id stocks }
 
 update (StockSelected stock opts) state =
-  noEffects (state { selectedStock = Just stock, selectedOptions = opts })
+  let options = either (const Nothing) Just opts
+      stock'  = setOptions stock options
+   in noEffects $ (updateStock state stock') { selectedStock = Just stock' }
 
 update (StockListAction (StockList.StockSelected stock)) state =
   { state: state { selectedStock = Just stock }
   , effects: [ do
-      options <- loadOptions state.date stock
-      pure $ StockSelected stock (either (const Nothing) Just options)
+      StockSelected stock <$> loadOptions state.date stock
     ]
   }
 
 update Init state =
   { state: state
-  , effects: [ do
-      res <- loadStocks
-      pure $ StocksLoaded (mapStocks <$> res)
-    ]
+  , effects: [ StocksLoaded <$> loadStocks ]
   }
-  where
-    mapStocks ss = fromStock <$> ss
-    fromStock s = StockInfo { stock: s, calls: [], puts: [] }

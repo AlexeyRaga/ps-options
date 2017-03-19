@@ -24,6 +24,11 @@ body, html {
   flex-grow: 1
 }
 
+.stock-chart {
+  width: 800px;
+  height: 475px;
+}
+
 .stock-item {
   cursor: pointer;
   padding: 10px 10px 5px 10px;

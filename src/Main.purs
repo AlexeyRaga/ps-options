@@ -2,20 +2,18 @@ module Main where
 
 import App as App
 import Control.Bind ((=<<))
-import Control.Monad.Aff (launchAff)
 import Control.Monad.Eff (Eff)
-import Control.Monad.Eff.Class (liftEff)
-import Control.Monad.Eff.Console (CONSOLE, log)
+import Control.Monad.Eff.Console (CONSOLE)
 import Control.Monad.Eff.Now (NOW, now)
-import DOM (DOM)
 import Data.DateTime (date)
 import Data.DateTime.Instant (toDateTime)
+import DOM (DOM)
 import Network.HTTP.Affjax (AJAX)
-import Options (fakeLoadOptions)
-import Prelude (Unit, bind, pure, show, (<$>), (<<<), ($))
+import Prelude (Unit, bind, pure, (<$>), (<<<))
 import Pux (start, renderToDOM, Config, CoreEffects)
 import Pux.Router (sampleUrl)
 import Signal ((~>))
+import Utils (nextExpiry)
 
 type AppEffects = (console :: CONSOLE, dom :: DOM, ajax :: AJAX, now :: NOW)
 
@@ -35,6 +33,6 @@ config state = do
 main :: Eff (CoreEffects AppEffects) Unit
 main = do
   date <- (date <<< toDateTime) <$> now
-  app <- start =<< config (App.init date)
+  app <- start =<< config (App.init (nextExpiry date))
 
   renderToDOM "#app" app.html
