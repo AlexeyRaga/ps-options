@@ -21,7 +21,9 @@ body, html {
 
 #main {
   margin: 0px 15px 5px 15px;
-  flex-grow: 1
+  flex-grow: 1;
+  overflow-y: scroll;
+  height:100%;
 }
 
 .stock-chart {
@@ -77,4 +79,20 @@ body, html {
 
 .stock-price {
   float: right!important;
+}
+
+.option-row-highlighted {
+  background-color: yellow;
+}
+
+.options-columns-strike {
+  background-color: lightgray;
+}
+
+.option-strike-low .option-cell-call {
+  background-color: yellow;
+}
+
+.option-strike-low .option-cell-put {
+  background-color: yellow;
 }

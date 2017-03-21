@@ -1,18 +1,19 @@
 module Utils
 ( stringToNumber
 , stringToNumberOrZero
-, nextExpiry
+, nextExpiry, toSeconds
 , mapLeft, mapEither
 ) where
 
 import Data.Bounded (bottom)
 import Data.Date (Date, Month(..), Weekday(..), year, month, weekday, canonicalDate)
 import Data.DateTime (DateTime(..), date, adjust)
+import Data.DateTime.Instant (fromDateTime, unInstant)
 import Data.Either (Either(..), either)
 import Data.Enum (fromEnum, succ)
 import Data.Int (toNumber)
 import Data.Maybe (Maybe(..), maybe)
-import Data.Time.Duration (class Duration, Days(..))
+import Data.Time.Duration (class Duration, Days(..), Seconds, convertDuration)
 import Global (readFloat, isNaN)
 import Prelude (id, ($), (+), (-), (<<<), (==), (>))
 
@@ -27,6 +28,9 @@ stringToNumber s = if isNaN n then Nothing else Just n where n = readFloat s
 
 stringToNumberOrZero :: String -> Number
 stringToNumberOrZero s = maybe 0.0 id (stringToNumber s)
+
+toSeconds :: Date -> Seconds
+toSeconds d = convertDuration $ unInstant $ fromDateTime $ DateTime d bottom
 
 nextExpiry :: Date -> Date
 nextExpiry d =
