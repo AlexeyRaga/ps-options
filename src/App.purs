@@ -1,7 +1,7 @@
 module App where
 
 import Data.Maybe
-import OptionsTable as O
+import OptionsTable as Options
 import StockList as StockList
 import Control.Monad.Aff.Console (CONSOLE)
 import Control.Monad.Eff.Now (NOW)
@@ -67,7 +67,7 @@ stockInfo' date s@(Stock stock) =
       [ img [ className "stock-chart"
             , src ("https://chart.finance.yahoo.com/z?&t=6m&q=l&l=on&z=l&a=v&p=m50,m200&s=" <> stock.symbol)
             ] []
-      , div [ id_ "options-panel" ] [ O.view date s ]
+      , div [ id_ "options-panel" ] [ Options.view date s ]
       ]
 
 view :: State -> Html Action
@@ -77,8 +77,6 @@ view state =
       , div [ id_ "main" ]
             [ maybe (div [] []) stockHeader state.selectedStock
             , maybe (div [] []) (stockInfo' state.date) state.selectedStock
-            -- , div [id_ "options-panel"]
-            --       [ maybe (div [] []) (O.view state.date) state.selectedStock ]
             ]
       , div [ id_ "status" ] [ text $ state.status ]
       ]
@@ -90,7 +88,7 @@ update Init state =
 update (StocksLoaded stocks) state =
   noEffects $ state { stocks = either (const []) id stocks }
 
-update (StockListAction (StockList.StockSelected stock)) state =
+update (StockListAction (StockList.StockSelected stock@(Stock s))) state =
   { state: state { selectedStock = Just stock }
   , effects: [ StockSelected stock <$> loadOptions state.date stock ]
   }
@@ -101,6 +99,3 @@ update (StockSelected stock opts) state =
     Right opts' ->
       let stock'  = setOptions stock (Just opts')
        in (updateStock state stock') { selectedStock = Just stock', status = "" }
-  -- let options = either (const Nothing) Just opts
-  --     stock'  = setOptions stock options
-  --  in noEffects $ (updateStock state stock') { selectedStock = Just stock' }
