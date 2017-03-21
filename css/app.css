@@ -19,11 +19,23 @@ body, html {
   min-width: 32rem;
 }
 
+#options-panel {
+  overflow-y: scroll;
+  height:100%;
+  min-width: 37rem;
+  flex-grow: none;
+  padding-left: 3rem;
+}
+
 #main {
   margin: 0px 15px 5px 15px;
   flex-grow: 1;
-  overflow-y: scroll;
   height:100%;
+}
+
+.stock-body {
+  display: flex;
+  height: 100%
 }
 
 .stock-chart {
@@ -81,18 +93,36 @@ body, html {
   float: right!important;
 }
 
-.option-row-highlighted {
-  background-color: yellow;
+.options-table tr {
+  border-bottom: 1px lightgray solid;
+}
+
+.options-table td, .options-table th {
+  padding: 0.6rem;
 }
 
 .options-columns-strike {
-  background-color: lightgray;
+  font-weight: bold;
+  border-left: 1px lightgray solid;
+  border-right: 1px lightgray solid;
+}
+
+.option-cell-strike {
+  font-weight: bold;
 }
 
 .option-strike-low .option-cell-call {
-  background-color: yellow;
+  color: lightgray;
+}
+
+.option-strike-high .option-cell-put {
+  color: lightgray;
 }
 
 .option-strike-low .option-cell-put {
-  background-color: yellow;
+  background-color: #EFEFEF;
+}
+
+.option-strike-high .option-cell-call {
+  background-color: #EFEFEF;
 }

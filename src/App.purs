@@ -7,7 +7,7 @@ import Control.Monad.Aff.Console (CONSOLE)
 import Control.Monad.Eff.Now (NOW)
 import DOM (DOM)
 import Data.Date (Date)
-import Data.Either (Either, either)
+import Data.Either (Either(..), either)
 import Network.HTTP.Affjax (AJAX)
 import Prelude (const, id, map, show, ($), (<$>), (<>))
 import Pux (EffModel, noEffects)
@@ -25,6 +25,7 @@ type State =
   { date :: Date
   , stocks :: Array Stock
   , selectedStock :: Maybe Stock
+  , status :: String
   }
 
 updateStock :: State -> Stock -> State
@@ -38,19 +39,18 @@ init d =
   { date: d
   , stocks: []
   , selectedStock: Nothing
+  , status: ""
   }
 
 stockHeader :: Stock -> Html Action
 stockHeader (Stock stock) =
   div [ className "stock-header"]
-      [ div []
-            [ h1 [ className "stock-title" ]
-                 [ text stock.name
-                 , span [ className "stock-price"] [ text ("$" <> show stock.price) ]
-                 ]
-            , p  [ className "stock-subtitle"]
-                 [ text (stock.symbol <>" | " <> stock.sector) ]
-            ]
+      [ h1 [ className "stock-title" ]
+           [ text stock.name
+           , span [ className "stock-price"] [ text ("$" <> show stock.price) ]
+           ]
+      , p  [ className "stock-subtitle"]
+           [ text (stock.symbol <>" | " <> stock.sector) ]
       ]
 
 stockInfo :: Stock -> Html Action
@@ -61,34 +61,46 @@ stockInfo (Stock stock) =
             ] []
       ]
 
+stockInfo' :: Date -> Stock -> Html Action
+stockInfo' date s@(Stock stock) =
+  div [ className "stock-body" ]
+      [ img [ className "stock-chart"
+            , src ("https://chart.finance.yahoo.com/z?&t=6m&q=l&l=on&z=l&a=v&p=m50,m200&s=" <> stock.symbol)
+            ] []
+      , div [ id_ "options-panel" ] [ O.view date s ]
+      ]
+
 view :: State -> Html Action
 view state =
   div [ id_ "layout" ]
       [ div [ id_ "stock-list"] [ map StockListAction $ StockList.view state.stocks ]
       , div [ id_ "main" ]
             [ maybe (div [] []) stockHeader state.selectedStock
-            , maybe (div [] []) stockInfo state.selectedStock
-            , maybe (div [] []) (O.view state.date) state.selectedStock
+            , maybe (div [] []) (stockInfo' state.date) state.selectedStock
+            -- , div [id_ "options-panel"]
+            --       [ maybe (div [] []) (O.view state.date) state.selectedStock ]
             ]
+      , div [ id_ "status" ] [ text $ state.status ]
       ]
 
 update :: Action -> State -> EffModel State Action (console :: CONSOLE, ajax :: AJAX, dom :: DOM, now :: NOW)
+update Init state =
+  { state: state, effects: [ StocksLoaded <$> loadStocks ] }
+
 update (StocksLoaded stocks) state =
   noEffects $ state { stocks = either (const []) id stocks }
 
-update (StockSelected stock opts) state =
-  let options = either (const Nothing) Just opts
-      stock'  = setOptions stock options
-   in noEffects $ (updateStock state stock') { selectedStock = Just stock' }
-
 update (StockListAction (StockList.StockSelected stock)) state =
   { state: state { selectedStock = Just stock }
-  , effects: [ do
-      StockSelected stock <$> loadOptions state.date stock
-    ]
+  , effects: [ StockSelected stock <$> loadOptions state.date stock ]
   }
 
-update Init state =
-  { state: state
-  , effects: [ StocksLoaded <$> loadStocks ]
-  }
+update (StockSelected stock opts) state =
+  noEffects $ case opts of
+    Left err -> state { status = err }
+    Right opts' ->
+      let stock'  = setOptions stock (Just opts')
+       in (updateStock state stock') { selectedStock = Just stock', status = "" }
+  -- let options = either (const Nothing) Just opts
+  --     stock'  = setOptions stock options
+  --  in noEffects $ (updateStock state stock') { selectedStock = Just stock' }

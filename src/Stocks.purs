@@ -88,10 +88,10 @@ instance decodeJsonOptions :: DecodeJson Options where
     obj     <- decodeJson json
     chain   <- obj    .? "optionChain"
     res     <- (chain .? "result")  >>= eitherHead
+    strikes <- res    .? "strikes"
     opts    <- (res   .? "options") >>= eitherHead
     puts    <- opts   .? "puts"
     calls   <- opts   .? "calls"
-    strikes <- opts   .? "strikes"
     pure $ Options { puts: toMap puts, calls: toMap calls, strikes: strikes }
     where
       toMap :: Array Option -> Map Strike Option
