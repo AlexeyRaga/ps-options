@@ -9,8 +9,8 @@ import DOM (DOM)
 import Data.Date (Date)
 import Data.Either (Either(..), either)
 import Network.HTTP.Affjax (AJAX)
-import Prelude (const, id, map, show, ($), (<$>), (<>))
-import Pux (EffModel, noEffects)
+import Prelude (const, (#), id, map, show, ($), (<$>), (<>))
+import Pux (EffModel, mapEffects, mapState, noEffects)
 import Pux.Html (Html, div, h1, span, p, text, img)
 import Pux.Html.Attributes (id_, className, src)
 import Stocks (Options, Stock(..), isSameSymbol, loadOptions, loadStocks, setOptions)
@@ -26,6 +26,7 @@ type State =
   , stocks :: Array Stock
   , selectedStock :: Maybe Stock
   , status :: String
+  , filter :: String
   }
 
 updateStock :: State -> Stock -> State
@@ -40,6 +41,7 @@ init d =
   , stocks: []
   , selectedStock: Nothing
   , status: ""
+  , filter: ""
   }
 
 stockHeader :: Stock -> Html Action
@@ -73,8 +75,8 @@ stockInfo' date s@(Stock stock) =
 view :: State -> Html Action
 view state =
   div [ id_ "layout" ]
-      [ div [ id_ "stock-list"] [ map StockListAction $ StockList.view state.stocks ]
-      , div [ id_ "main" ]
+      [ div [ id_ "left-panel"] [ map StockListAction $ StockList.view state.stocks state.filter ]
+      , div [ id_ "main-panel" ]
             [ maybe (div [] []) stockHeader state.selectedStock
             , maybe (div [] []) (stockInfo' state.date) state.selectedStock
             ]
@@ -99,3 +101,13 @@ update (StockSelected stock opts) state =
     Right opts' ->
       let stock'  = setOptions stock (Just opts')
        in (updateStock state stock') { selectedStock = Just stock', status = "" }
+
+update (StockListAction (StockList.SortBy value)) state =
+  StockList.update (StockList.SortBy value) state.stocks
+  # mapState (state { stocks = _ })
+  # mapEffects StockListAction
+
+update (StockListAction (StockList.Filter value)) state =
+  StockList.update (StockList.Filter value) state.stocks
+  # mapState (\x -> state { filter = value })
+  # mapEffects StockListAction

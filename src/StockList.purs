@@ -1,15 +1,25 @@
 module StockList where
 
 import Stocks
-import Prelude (($), show, const, map, (<>))
+import Data.Array (filter, sortBy)
+import Data.Ord (comparing)
+import Data.String (Pattern(..), contains, toUpper)
+import Prelude (const, map, show, ($), (<>), (<<<))
 import Pux (EffModel, noEffects)
-import Pux.Html (Html, ul, li, p, div, span, text)
-import Pux.Html.Attributes (id_, className)
-import Pux.Html.Events (onClick)
+import Pux.Html (Html, a, div, input, li, p, span, text, ul, (!), (#))
+import Pux.Html.Attributes (id_, className, href)
+import Pux.Html.Events (onChange, onClick)
 
-data Action = StockSelected Stock
+data SortBy = SortBySymbol | SortByPrice
+data Action
+  = StockSelected Stock
+  | SortBy SortBy
+  | Filter String
+
 
 update :: forall eff. Action -> Stocks -> EffModel Stocks Action eff
+update (SortBy SortByPrice)  = noEffects <<< sortBy (comparing stockPrice)
+update (SortBy SortBySymbol) = noEffects <<< sortBy (comparing stockSymbol)
 update _ = noEffects
 
 listItem :: Stock -> Html Action
@@ -22,10 +32,27 @@ listItem (Stock state) =
                  [ text state.sector
                  , span [ className "stock-item-price"] [ text ("$" <> show state.price) ]
                  ]
-
              ]
   ]
 
-view :: Stocks -> Html Action
-view state =
-  ul [id_ "list", className "nav nav-sidebar"] $ map listItem state
+cmdPanel :: Stocks -> Html Action
+cmdPanel state =
+  div [ className "stock-list-commands" ]
+      [ input [ onChange (\evt -> Filter (toUpper evt.target.value) )] []
+      , span []
+             [ a [ className "btn glyphicon glyphicon-usd"
+                 , href "#", onClick (const $ SortBy SortByPrice)
+                 ] []
+             , a [ className "btn glyphicon glyphicon-sort-by-alphabet"
+                 , href "#", onClick (const $ SortBy SortBySymbol)
+                 ] []
+             ]
+      ]
+
+view :: Stocks -> String -> Html Action
+view state txt =
+  let stocks' = filter (\s -> contains (Pattern txt) (stockSymbol s)) state
+   in div [ className "stock-list" ]
+      [ cmdPanel state
+      , ul [id_ "list", className "stock-list-items nav nav-sidebar"] $ map listItem stocks'
+      ]

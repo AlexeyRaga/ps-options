@@ -5,6 +5,7 @@ module Stocks
 , loadOptions
 , isSameSymbol
 , setOptions
+, stockPrice, stockSymbol
 ) where
 
 import Utils
@@ -46,6 +47,12 @@ newtype Stock = Stock
   , price   :: Number
   , options :: Maybe Options
   }
+
+stockPrice :: Stock -> Number
+stockPrice (Stock s) = s.price
+
+stockSymbol :: Stock -> String
+stockSymbol (Stock s) = s.symbol
 
 optStrike :: Option -> Strike
 optStrike (Option o) = o.strike
