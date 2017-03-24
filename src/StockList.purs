@@ -5,7 +5,7 @@ import Data.Array (filter, sortBy)
 import Data.Ord (comparing)
 import Data.String (Pattern(..), contains, toUpper)
 import Prelude (const, map, show, ($), (<<<), (<>))
-import Pux (EffModel, noEffects)
+import Pux (Update, noEffects)
 import Pux.Html (Html, a, div, input, li, p, span, text, ul)
 import Pux.Html.Attributes (id_, className, href)
 import Pux.Html.Events (onChange, onClick)
@@ -18,29 +18,29 @@ data Action
   | SortBy SortBy
   | Filter Filter
 
-view :: Stocks -> Filter -> Html Action
-view state txt =
-  let stocks' = filter (contains (Pattern txt) <<< stockSymbol) state
+view :: Array Stock -> Filter -> Html Action
+view stocks txt =
+  let stocks' = filter (contains (Pattern txt) <<< stockSymbol) stocks
    in div [ className "stock-list" ]
-      [ cmdPanel state
+      [ cmdPanel
       , ul [id_ "list", className "stock-list-items nav nav-sidebar"] $ map listItem stocks'
       ]
 
 listItem :: Stock -> Html Action
-listItem (Stock state) =
-  li  [ className "stock-item", onClick (const $ StockSelected (Stock state)) ]
-      [ span [ className "stock-item-symbol"] [text state.symbol ]
+listItem (Stock stock) =
+  li  [ className "stock-item", onClick (const $ StockSelected (Stock stock)) ]
+      [ span [ className "stock-item-symbol"] [text stock.symbol ]
       , div  []
-             [ span [ className "stock-item-name" ] [ text state.name ]
+             [ span [ className "stock-item-name" ] [ text stock.name ]
              , p [ className "stock-item-sector" ]
-                 [ text state.sector
-                 , span [ className "stock-item-price"] [ text ("$" <> show state.price) ]
+                 [ text stock.sector
+                 , span [ className "stock-item-price"] [ text ("$" <> show stock.price) ]
                  ]
              ]
   ]
 
-cmdPanel :: Stocks -> Html Action
-cmdPanel state =
+cmdPanel :: Html Action
+cmdPanel =
   div [ className "stock-list-commands" ]
       [ input [ onChange (\evt -> Filter (toUpper evt.target.value) )] []
       , span []
@@ -53,7 +53,7 @@ cmdPanel state =
              ]
       ]
 
-update :: forall eff. Action -> Stocks -> EffModel Stocks Action eff
+update :: forall eff. Update (Array Stock) Action eff
 update (SortBy SortByPrice)  = noEffects <<< sortBy (comparing stockPrice)
 update (SortBy SortBySymbol) = noEffects <<< sortBy (comparing stockSymbol)
 update _ = noEffects

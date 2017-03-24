@@ -3,7 +3,6 @@ module Main where
 import App as App
 import Control.Bind ((=<<))
 import Control.Monad.Eff (Eff)
-import Control.Monad.Eff.Console (CONSOLE)
 import Control.Monad.Eff.Now (NOW, now)
 import Data.DateTime (date)
 import Data.DateTime.Instant (toDateTime)
@@ -15,10 +14,10 @@ import Pux.Router (sampleUrl)
 import Signal ((~>))
 import Utils (nextExpiry)
 
-type AppEffects = (console :: CONSOLE, dom :: DOM, ajax :: AJAX, now :: NOW)
+type AppEffects = (dom :: DOM, ajax :: AJAX, now :: NOW)
 
 -- | App configuration
-config :: forall eff. App.State -> Eff (console :: CONSOLE, dom :: DOM | eff) (Config App.State App.Action AppEffects)
+config :: forall eff. App.State -> Eff (dom :: DOM | eff) (Config App.State App.Action AppEffects)
 config state = do
   urlSignal <- sampleUrl
 
