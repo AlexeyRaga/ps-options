@@ -6,7 +6,7 @@ import Data.Map (lookup)
 import Data.Maybe (Maybe(..), maybe)
 import Prelude (show, ($), (<$>), (>))
 import Pux.Html (Html, col, colgroup, div, table, tbody, td, text, th, thead, tr, (!), (#), (##))
-import Pux.Html.Attributes (className, span_)
+import Pux.Html.Attributes (className, colSpan, span_)
 import Stocks (Option(Option), Options(Options), Stock(Stock), Strike)
 
 newtype TableRow = TableRow
@@ -31,6 +31,10 @@ optionsTable s os =
         , col [ className "options-columns-strike" ] []
         , col [ span_ "3", className "options-columns-puts" ] []
         ]
+    , thead [] [ th [ colSpan "3" ] [ text "Call" ]
+               , th [] []
+               , th [ colSpan "3" ] [ text "Put" ]
+               ]
     , thead [] ((\x -> th # text x) <$> ["Ask", "Bid", "Price", "Strike", "Price", "Bid", "Ask"])
     , tbody [] (optionRow s <$> toRows os)
     ]
