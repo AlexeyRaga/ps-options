@@ -38,6 +38,7 @@ newtype Options = Options
   { puts    :: Map Strike Option
   , calls   :: Map Strike Option
   , strikes :: Array Strike
+  , price   :: Number
   }
 
 newtype Stock = Stock
@@ -58,7 +59,9 @@ optStrike :: Option -> Strike
 optStrike (Option o) = o.strike
 
 setOptions :: Stock -> Maybe Options -> Stock
-setOptions (Stock stock) o = Stock $ stock { options = o }
+setOptions (Stock stock) o = case o of
+  Nothing -> Stock stock
+  Just (Options o') -> Stock $ stock { price = o'.price, options = Just (Options o') }
 
 isSameSymbol :: Stock -> Stock -> Boolean
 isSameSymbol (Stock a) (Stock b) = a.symbol == b.symbol
@@ -95,11 +98,13 @@ instance decodeJsonOptions :: DecodeJson Options where
     obj     <- decodeJson json
     chain   <- obj    .? "optionChain"
     res     <- (chain .? "result")  >>= eitherHead
+    quote   <- res    .? "quote"
+    price   <- quote  .? "regularMarketPrice"
     strikes <- res    .? "strikes"
     opts    <- (res   .? "options") >>= eitherHead
     puts    <- opts   .? "puts"
     calls   <- opts   .? "calls"
-    pure $ Options { puts: toMap puts, calls: toMap calls, strikes: strikes }
+    pure $ Options { puts: toMap puts, calls: toMap calls, strikes: strikes, price: price }
     where
       toMap :: Array Option -> Map Strike Option
       toMap opts = fromFoldable $ (\o -> Tuple (optStrike o) o) <$> opts

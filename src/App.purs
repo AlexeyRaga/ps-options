@@ -10,7 +10,7 @@ import Data.Either (Either(..))
 import Network.HTTP.Affjax (AJAX)
 import Prelude ((#), map, show, ($), (<$>), (<>))
 import Pux (Update, mapEffects, mapState, noEffects)
-import Pux.Html (Html, div, h1, img, p, span, text)
+import Pux.Html (Html, div, h1, img, p, span, text, (!))
 import Pux.Html.Attributes (id_, className, src)
 import Stocks (Options, Stock(..), isSameSymbol, loadOptions, loadStocks, setOptions)
 
@@ -38,13 +38,13 @@ init d =
   }
 
 view :: State -> Html Action
-view state =
+view s =
   div [ id_ "layout" ]
-      [ div [ id_ "left-panel"] [ map StockListAction $ StockList.view state.stocks state.filter ]
+      [ div [ id_ "left-panel" ] [ StockListAction <$> StockList.view s.stocks s.filter ]
       , div [ id_ "main-panel" ]
-            [ maybe (span [] []) warning state.status
-            , maybe (div [] []) stockHeader state.selectedStock
-            , maybe (div [] []) (stockInfo state.date) state.selectedStock
+            [ maybe (span [] []) warning s.status
+            , maybe (div [] [])  stockHeader s.selectedStock
+            , maybe (div [] []) (stockInfo s.date) s.selectedStock
             ]
       ]
 
