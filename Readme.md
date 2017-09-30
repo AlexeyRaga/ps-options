@@ -1,4 +1,5 @@
 Example $ Purescript + React (Pux) + Electron
+==============================================
 
 ### Getting ready
 
