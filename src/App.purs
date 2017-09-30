@@ -81,7 +81,7 @@ update (StocksLoaded stocks) state =
     Right value -> state { stocks = value }
     Left err -> state {
       status = Just $ """Known issue. data.okfn.org is known to be unstable.
-                         Please try again in a couple of hours. """ <> err }
+                         Please try again in a couple of hours: """ <> err }
 
 update (StockListAction (StockList.StockSelected stock@(Stock s))) state =
   { state: state { selectedStock = Just stock }

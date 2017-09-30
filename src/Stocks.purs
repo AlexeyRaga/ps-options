@@ -23,7 +23,7 @@ import Data.String.Regex.Unsafe (unsafeRegex)
 import Data.Time.Duration (Seconds(..))
 import Data.Tuple (Tuple(..))
 import Network.HTTP.Affjax (AJAX, URL, get)
-import Prelude (bind, pure, show, ($), (<$>), (<<<), (<>), (==), (>>=))
+import Prelude (bind, pure, show, ($), (<$>), (<<<), (<>), (==), (>>=), id)
 
 type Stocks = Array Stock
 type Strike = Number
@@ -76,7 +76,7 @@ instance decodeJsonStock :: DecodeJson Stock where
     pure $ Stock { symbol  : symbol
                  , name    : name
                  , sector  : sector
-                 , price   : stringToNumberOrZero price
+                 , price   : maybe 0.0 id price
                  , options : Nothing
                  }
 
@@ -115,7 +115,7 @@ eitherHead a = maybe (Left "Noooo") Right (head a)
 
 loadStocks :: forall eff. Aff (ajax :: AJAX | eff) (Either String Stocks)
 loadStocks = do
-  res <- attempt $ get "http://data.okfn.org/data/core/s-and-p-500-companies/r/constituents-financials.json"
+  res <- attempt $ get "https://pkgstore.datahub.io/core/s-and-p-500-companies:constituents-financials_json/data/constituents-financials_json.json"
   let decode r = decodeJson r.response :: Either String Stocks
   pure $ either (Left <<< show) decode res
 
